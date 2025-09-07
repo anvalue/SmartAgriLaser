@@ -1,0 +1,15 @@
+<launch>
+  <arg name="imu_in_topic" default="/imu"/>
+  <arg name="imu_transform" default="true"/> 
+  <node name="cartographer_node" 
+      pkg="cartographer_ros"
+      type="cartographer_node" args="
+          -configuration_directory $(find turn_on_dlrobot_robot)/param_cartographer/cartographer
+          -configuration_basename revo_lds.lua"
+      output="screen">
+    <!--remap from="scan" to="horizontal_laser_2d" /-->
+	<remap from="imu" to="imu/data" />
+  </node>
+  <node name="cartographer_occupancy_grid_node" pkg="cartographer_ros"
+      type="cartographer_occupancy_grid_node" args="-resolution 0.05" />
+</launch>

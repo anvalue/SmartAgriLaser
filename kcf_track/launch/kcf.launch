@@ -1,0 +1,5 @@
+<launch>
+  <include file="$(find turn_on_dlrobot_robot)/launch/turn_on_dlrobot_robot.launch" />
+  <include file="$(find turn_on_dlrobot_robot)/launch/dlrobot_camera.launch" />
+ 
+</launch>

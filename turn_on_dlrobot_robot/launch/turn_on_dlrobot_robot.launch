@@ -1,0 +1,67 @@
+<launch>
+  <!-- Arguments参数 -->
+  <arg name="car_mode"  default="mini_tank" doc="opt: mini_akm,mini_tank"/>
+
+  <arg name="navigation_mode"  default="TEB" doc="opt: DWA,TEB"/>
+ 
+  <param name="if_akm_yes_or_no" value="no"/>
+
+  <!--是否开启导航功能 在导航相关文件中开启 此处默认不开启-->
+  <arg name="navigation"  default="false"/>
+  <arg name="pure3d_nav"  default="false"/>
+  <!--是否重复开启底层节点 在语音运行自主建图时开启 此处默认不开启-->
+  <arg name="repeat"  default="false"/>
+  <!--是否使用cartographer建图算法 此处默认不使用-->
+  <arg name="is_cartographer"  default="false"/>
+  <arg name="odom_frame_id"  default="odom_combined"/>
+  
+  <!-- turn on base_serial 开启底层单片机的控制节点  -->
+  <include file="$(find turn_on_dlrobot_robot)/launch/include/base_serial.launch" unless="$(arg repeat)">
+    <arg name="odom_frame_id"  value="$(arg odom_frame_id)"/>
+  </include>
+   
+  <!--当开启导航功能时 启用导航算法选择-->
+ 
+  <group if="$(eval navigation_mode == 'DWA')">
+    <include file="$(find turn_on_dlrobot_robot)/launch/include/dwa_local_planner.launch" if="$(arg navigation)">
+  </include>
+  </group>
+ 
+  <group if="$(eval navigation_mode == 'TEB')">
+   <include file="$(find turn_on_dlrobot_robot)/launch/include/teb_local_planner.launch" if="$(arg navigation)">
+  </include>
+  </group>
+ 
+
+  <!--当开启纯视觉导航功能时-->
+  <include file="$(find turn_on_dlrobot_robot)/launch/include/dwa_local_planner_pure3d.launch" if="$(arg pure3d_nav)"/>
+
+  <!-- 发布用于建图、导航的TF关系与小车外形可视化 -->
+  <include file="$(find turn_on_dlrobot_robot)/launch/robot_model_visualization.launch" unless="$(arg repeat)">
+    <arg name="car_mode" value="$(arg car_mode)"/>
+  </include>
+
+   <!-- include file="$(find imu_launch)/launch/imu_msg.launch" / -->
+  
+  <!-- Filter and fuse raw imu data 0.025 -->
+  <node pkg="imu_filter_madgwick" type="imu_filter_node" name="imu_filter_madgwick" output="screen" respawn="false" >
+        <param name="fixed_frame" value="base_link" />
+        <param name="use_mag" value="false" />
+        <param name="publish_tf" value="false" />
+        <param name="use_magnetic_field_msg" value="false" />
+        <param name="world_frame" value="enu" />
+        <param name="orientation_stddev" value="0.025" />
+        <param name="angular_scale" value="1.0" />
+        
+  </node>
+ 
+  <!-- Odom-IMU Extended Kalman Filter-->
+    <node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization"  unless="$(arg is_cartographer)"> 
+        <remap from="odometry/filtered" to="robot_pose_ekf/odom_combined" />
+        <rosparam command="load" file="$(find turn_on_dlrobot_robot)/param_common/robot_localization.yaml" />
+    </node>
+ 
+
+ </launch>
+
+

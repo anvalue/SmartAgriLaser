@@ -1,0 +1,20 @@
+<launch>
+
+ <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+		<rosparam file="$(find turn_on_dlrobot_robot)/params_navigation/navigation/move_base/navigation_move_base.yaml" command="load" />
+		<rosparam file="$(find turn_on_dlrobot_robot)/params_navigation/navigation/costmap/one_laser_global_costmap_params.yaml" command="load" ns="global_costmap"/>
+		<rosparam file="$(find turn_on_dlrobot_robot)/params_navigation/navigation/costmap/one_laser_local_costmap_params.yaml" command="load" ns="local_costmap"/>
+		<rosparam file="$(find turn_on_dlrobot_robot)/params_navigation/navigation/global_planer/global_planner_params.yaml" command="load" ns="GlobalPlanner"/>
+		<rosparam file="$(find turn_on_dlrobot_robot)/params_navigation/navigation/local_planer/navigation_teb_local_planner_params_al.yaml" command="load"/>
+		<param name="TebLocalPlannerROS/xy_goal_tolerance" value="0.3" />
+		<param name="TebLocalPlannerROS/yaw_goal_tolerance" value="0.1" />
+		<param name="distance_threshold" value="0.5" />
+        <remap from="odom" to="odom" />
+ </node>
+
+
+  <node name="tcp_server_node" pkg="move_base" type="tcp_server_node" output="screen" />
+
+</launch>
+
+

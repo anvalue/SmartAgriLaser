@@ -1,0 +1,5 @@
+<launch>
+  <!-- include file="$(find turn_on_dlrobot_robot)/launch/dlrobot_camera.launch" /-->
+  <node name='imageResize' pkg="kcf_track" type="imageResize.py">
+  </node>
+</launch>

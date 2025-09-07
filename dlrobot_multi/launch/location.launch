@@ -1,0 +1,44 @@
+
+<launch>
+	<!-- 从机机器人序号，slave1代表从机1号，slave2代表从机2号，以此类推-->
+	<arg name="slave_robot" value="slave1"/> 
+
+	<!-- 在主机（领航者）的运动轨迹中分离出从机的期望跟随坐标  -->
+	<arg name="slave_x" value="-1.9"/> 		<!-- slave_x为从机（跟随者）的期望x坐标，主机前方为正方向，单位：m  -->
+	<arg name="slave_y" value="0.0"/> 		<!-- slave_y为从机（跟随者）的期望y坐标，主机左方为正方向，单位：m  -->
+	<node pkg="tf" type="static_transform_publisher" name="base_to_$(arg slave_robot)" args="$(arg slave_x) $(arg slave_y) 0 0 0 0   base_footprint $(arg slave_robot) 100" />
+
+	<!-- 定义命令空间，区分不同的从机 -->
+	<group ns ="$(arg slave_robot)">
+		
+		<!-- 用于连通TF，left_link等...  -->
+	    <param name = "tf_prefix" value="$(arg slave_robot)"/>
+	    
+		<!-- 开启机器人底层相关节点  -->
+		<include file="$(find dlrobot_multi)/launch/turn_on_dlrobot_robot.launch" >
+		  <arg name="slave_robot" value="$(arg slave_robot)"/>
+		  <arg name="slave_x" value="$(arg slave_x)"/> 		<!-- 初始位置 x坐标 -->
+		  <arg name="slave_y" value="$(arg slave_y)"/> 		<!-- 初始位置 y坐标 -->
+		  <arg name="is_cartographer"  value="true"/> 
+		</include>
+
+		<!--
+	    <include file="$(find dlrobot_multi)/launch/include/amcl.launch" >
+	      <arg name="use_map_topic" value="true"/>
+	      <arg name="slave_robot" value="$(arg slave_robot)"/>
+	    </include>
+		-->
+	 <node name="cartographer_node" pkg="cartographer_ros"
+		type="cartographer_node" args="
+			-configuration_directory $(find dlrobot_multi)/param/cartographer
+			-configuration_basename  third_generation_location.lua
+			-load_state_filename $(find turn_on_dlrobot_robot)/map/map_3d.pbstream"
+		output="screen">
+		<remap from="points2" to="/$(arg slave_robot)/lslidar_point_cloud" />
+		<remap from="imu" to= "/$(arg slave_robot)/imu" />
+        <remap from="odom" to="/$(arg slave_robot)/odom" />
+	 </node>
+
+	</group>
+	
+</launch>

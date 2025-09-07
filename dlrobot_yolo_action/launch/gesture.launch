@@ -1,0 +1,7 @@
+<launch>
+  <!-- 开启机器人底层相关节点  -->
+  <include file="$(find turn_on_dlrobot_robot)/launch/turn_on_dlrobot_robot.launch" />
+
+  <node name='no_map_action' pkg="dlrobot_yolo_action" type="no_map_action.py" output="screen"/>
+
+</launch>

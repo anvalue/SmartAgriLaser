@@ -1,0 +1,70 @@
+<launch>
+<arg name="navigation_mode"    default="TEB"/>
+<arg name="location_mode"      default="AMCL"/>
+<arg name="cartographer_mode"  default="2d"/>  
+  <group if="$(eval location_mode == 'AMCL')">
+    <!-- 开启机器人底层相关节点 同时开启导航功能-->
+    <include file="$(find turn_on_dlrobot_robot)/launch/turn_on_dlrobot_robot.launch">
+          <arg name="navigation"       value="true"/>
+	  <arg name="navigation_mode"  value="$(arg navigation_mode)"/>
+	  <arg name="is_cartographer"  value="false"/> 
+    </include>
+	
+    <!-- 开启用于导航的自适应蒙特卡洛定位amcl-->
+    <include file="$(find turn_on_dlrobot_robot)/launch/include/amcl.launch" />
+  </group>
+ 
+  <group if="$(eval location_mode == 'CARTO')">
+  
+    <!-- 开启机器人底层相关节点 同时开启导航功能-->
+    <include file="$(find turn_on_dlrobot_robot)/launch/turn_on_dlrobot_robot.launch">
+      <arg name="navigation"       value="true"/>
+	  <arg name="navigation_mode"  value="$(arg navigation_mode)"/>
+	  <arg name="is_cartographer"  value="true"/> 
+    </include>
+	
+
+	<group if="$(eval cartographer_mode == '2d')">
+      <node name="cartographer_node" pkg="cartographer_ros"
+		type="cartographer_node" args="
+			-configuration_directory $(find turn_on_dlrobot_robot)/param_cartographer/cartographer
+			-configuration_basename  location.lua
+			-load_state_filename $(find turn_on_dlrobot_robot)/map/map.bag.pbstream"
+		output="screen">
+		<remap from="imu" to="imu/data" />
+        <remap from="odom" to="odom" />
+	</node>
+   </group>
+	
+	<group if="$(eval cartographer_mode == '3d')">
+      <node name="cartographer_node" pkg="cartographer_ros"
+		type="cartographer_node" args="
+			-configuration_directory $(find turn_on_dlrobot_robot)/param_cartographer/cartographer
+			-configuration_basename  third_generation_location.lua
+			-load_state_filename $(find turn_on_dlrobot_robot)/map/map_3d.pbstream"
+		output="screen">
+		<remap from="points2" to="lslidar_point_cloud" />
+		<remap from="imu" to="imu/data" />
+        <remap from="odom" to="odom" />
+	</node>
+   </group>
+
+  </group>
+ 
+ <!-- turn on lidar开启雷达  -->
+ <include file="$(find turn_on_dlrobot_robot)/launch/dlrobot_lidar.launch" />
+
+ <!-- 设置需要用于导航的地图  -->
+ <arg name="map_file" default="$(find turn_on_dlrobot_robot)/map/DLROBOT.yaml"/>
+ <node name="map_server_for_test" pkg="map_server" type="map_server" args="$(arg map_file)">
+ </node>
+
+ <!-- MarkerArray功能节点> -->
+ <node name='send_mark' pkg="turn_on_dlrobot_robot" type="show_mark.py">
+ </node>
+
+</launch>
+
+
+
+

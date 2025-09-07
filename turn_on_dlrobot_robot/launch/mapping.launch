@@ -1,0 +1,86 @@
+
+<launch>
+  <arg name="mapping_mode"  default="gmapping" doc="opt: gmapping,hector,cartographer,karto"/>
+  <arg name="cartographer_mode"  default="2d" doc="opt: 2d,3d"/>
+  <!-- 是否在建图时开启导航 默认不开启 仅在rrt自主建图时同时进行-->
+  <arg name="navigation" default="false"/>
+  <arg name="odom_frame_id"  default="odom_combined"/>
+  
+  <!-- turn on lidar开启雷达 -->
+  <include file="$(find turn_on_dlrobot_robot)/launch/dlrobot_lidar.launch">
+     <arg name="mapping_mode" value="$(arg mapping_mode)"/>
+  </include>
+ 
+ 
+  <!-- 开启gmapping建图算法  -->
+  <group if="$(eval mapping_mode == 'gmapping')">
+  <include file="$(find turn_on_dlrobot_robot)/launch/include/algorithm_gmapping.launch" />
+  <!-- 开启机器人底层相关节点  -->
+  <include file="$(find turn_on_dlrobot_robot)/launch/turn_on_dlrobot_robot.launch">
+    <arg name="navigation" value="$(arg navigation)"/>
+    <arg name="is_cartographer" value="false"/>
+    <arg name="odom_frame_id"   value="$(arg odom_frame_id)"/>
+  </include>
+  </group>
+
+  <!-- 开启hector建图算法  -->
+  <group if="$(eval mapping_mode == 'hector')">
+  <include file="$(find turn_on_dlrobot_robot)/launch/include/algorithm_hector.launch" />
+  <!-- 开启机器人底层相关节点  -->
+  <include file="$(find turn_on_dlrobot_robot)/launch/turn_on_dlrobot_robot.launch">
+    <arg name="navigation" value="$(arg navigation)"/>
+    <arg name="is_cartographer" value="false"/>
+    <arg name="odom_frame_id"   value="$(arg odom_frame_id)"/>
+  </include>
+  </group> 
+
+   <!-- 开启karto建图算法  -->
+  <group if="$(eval mapping_mode == 'karto')">
+  <include file="$(find turn_on_dlrobot_robot)/launch/include/algorithm_karto.launch" />
+  <!-- 开启机器人底层相关节点  -->
+  <include file="$(find turn_on_dlrobot_robot)/launch/turn_on_dlrobot_robot.launch">
+    <arg name="navigation" value="$(arg navigation)"/>
+    <arg name="is_cartographer" value="false"/>
+    <arg name="odom_frame_id"   value="$(arg odom_frame_id)"/>
+  </include>
+  </group>  
+
+   <!-- 开启cartographer建图算法  -->
+  <group if="$(eval mapping_mode == 'cartographer')">
+  
+      <!-- 开启机器人底层相关节点  -->
+       <include file="$(find turn_on_dlrobot_robot)/launch/turn_on_dlrobot_robot.launch">
+       <arg name="navigation" value="$(arg navigation)"/>
+       <arg name="is_cartographer" value="true"/>
+       <arg name="odom_frame_id"   value="$(arg odom_frame_id)"/>
+       </include>
+  
+     <group if="$(eval cartographer_mode == '2d')">
+       <include file="$(find turn_on_dlrobot_robot)/launch/include/cartographer_2d.launch" />
+     </group> 
+  
+     <group if="$(eval cartographer_mode == '3d')">
+       
+	    <node name="cartographer_node" pkg="cartographer_ros"
+		type="cartographer_node" args="
+			-configuration_directory $(find turn_on_dlrobot_robot)/param_cartographer/cartographer/
+			-configuration_basename third_generation_mapping.lua"
+		output="screen">
+		<remap from="points2" to="lslidar_point_cloud" />
+        <remap from="odom" to="odom" />
+		<remap from="imu" to="imu/data" />
+	    </node>
+
+	     <node name="cartographer_occupancy_grid_node" pkg="cartographer_ros" type="cartographer_occupancy_grid_node" args="
+			  -resolution 0.05" />
+	   
+	   
+	   
+	   
+     </group> 
+  
+ 
+  
+  </group>  
+
+</launch>

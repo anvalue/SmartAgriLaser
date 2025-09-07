@@ -1,0 +1,19 @@
+<launch>
+  <arg name="slave_robot" default=""/>
+  <arg name="car_mode"    default=""/>
+  <arg name="is_cartographer"  default="false"/> 
+  <!-- 用于robot_state_publisher节点-->
+  <node pkg="tf" type="static_transform_publisher" name="base_to_link" args="0 0 0 0 0 0 $(arg slave_robot)/base_footprint $(arg slave_robot)/base_link 100" />
+  <node pkg="tf" type="static_transform_publisher" name="base_to_laser_link" args="0.20 0.00 0.52 3.14159 0 0  $(arg slave_robot)/base_footprint $(arg slave_robot)/laser_link 100" />
+  <node pkg="tf" type="static_transform_publisher" name="base_to_camera" args="0.265 0.00 0.315 0 0 0   $(arg slave_robot)/base_footprint $(arg slave_robot)/camera_link 100" />
+  <node pkg="tf" type="static_transform_publisher" name="base_to_gyro" args="0 0 0 0 0 0 $(arg slave_robot)/base_footprint $(arg slave_robot)/imu_link 100" />
+  <param name = "robot_description" textfile = "$(find turn_on_dlrobot_robot)/urdf/mini_diff_robot.urdf"/> 
+  <!-- 读取urdf信息(robot_description) 发布话题：/joint_states-->
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+  <!-- 订阅话题：/joint_states，发布小车TF信息-->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+  <!-- 扩张卡尔曼滤波 -->
+  <include file="$(find turn_on_dlrobot_robot)/launch/include/robot_pose_ekf.launch" unless="$(arg is_cartographer)"/>
+
+ </launch>

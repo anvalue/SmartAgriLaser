@@ -1,0 +1,22 @@
+#!/bin/bash
+
+cd /home/dlrobot/dlrobot_robot/src/turn_on_dlrobot_robot/map
+filename_suffix=`date "+%Y%m%d%H%M%S"`
+if [ -e "map_3d.pbstream" ];then
+    mv map_3d.pbstream map_3d$filename_suffix.pbstream
+fi
+
+if [ -e "map_3d.pgm" ];then
+    mv map_3d.pgm map_3d$filename_suffix.pgm
+fi
+
+if [ -e "map_3d.yaml" ];then
+    mv map_3d.yaml map_3d$filename_suffix.yaml
+fi
+
+rosrun map_server map_saver -f DLROBOT
+sleep 2
+
+rosservice call /finish_trajectory 0
+rosservice call /write_state "filename: '$(pwd)/map_3d.pbstream'"
+#echo "robot" | sudo -S chmod +777 -R /home/robot/catkin_ws/src/launch/robot_navigation_launch/map
